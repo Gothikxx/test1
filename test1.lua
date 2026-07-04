@@ -193,6 +193,8 @@ Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
 ----------------------------------------------------
 -- Panel Principal
 ----------------------------------------------------
+local AccentColor = Color3.fromRGB(255, 255, 255) -- Color de acento por defecto
+
 local panel = Instance.new("Frame")
 panel.Name = "MainPanel"
 panel.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -202,9 +204,12 @@ panel.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 panel.BorderSizePixel = 0
 panel.ClipsDescendants = true
 panel.ZIndex = 10
+panel.Active = true -- ¡ESTO EVITA QUE EL CLIC TRASPASE EL PANEL!
 panel.Parent = gui
 Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 12)
-Instance.new("UIStroke", panel).Color = Color3.fromRGB(50, 50, 50)
+
+local panelStroke = Instance.new("UIStroke", panel)
+panelStroke.Color = Color3.fromRGB(50, 50, 50)
 
 ----------------------------------------------------
 -- Sistema de Arrastre
@@ -293,7 +298,7 @@ tabContainer.Parent = dock
 local tabLayout = Instance.new("UIListLayout", tabContainer)
 tabLayout.FillDirection = Enum.FillDirection.Horizontal
 tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-tabLayout.Padding = UDim.new(0, 15)
+tabLayout.Padding = UDim.new(0, 5) -- Ajustado para caber más pestañas
 
 local pagesContainer = Instance.new("Frame")
 pagesContainer.Size = UDim2.new(1, -20, 1, -110)
@@ -304,10 +309,11 @@ pagesContainer.Parent = panel
 
 local pages = {}
 local tabButtons = {}
+local activeIndicators = {}
 
 local function createTab(name)
     local tabBtn = Instance.new("TextButton")
-    tabBtn.Size = UDim2.new(0, 90, 1, 0)
+    tabBtn.Size = UDim2.new(0, 95, 1, 0)
     tabBtn.BackgroundTransparency = 1
     tabBtn.Text = name
     tabBtn.TextColor3 = Color3.fromRGB(120, 120, 120)
@@ -320,10 +326,12 @@ local function createTab(name)
     indicator.Size = UDim2.new(0, 0, 0, 2)
     indicator.Position = UDim2.new(0.5, 0, 1, -2)
     indicator.AnchorPoint = Vector2.new(0.5, 0)
-    indicator.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    indicator.BackgroundColor3 = AccentColor
     indicator.BorderSizePixel = 0
     indicator.ZIndex = 12
     indicator.Parent = tabBtn
+
+    table.insert(activeIndicators, indicator)
 
     local page = Instance.new("ScrollingFrame")
     page.Size = UDim2.new(1, 0, 1, -10)
@@ -350,7 +358,7 @@ local function createTab(name)
             tween(b.ind, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {Size = UDim2.new(0, 0, 0, 2)})
         end
         page.Visible = true
-        tween(tabBtn, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {TextColor3 = Color3.fromRGB(255, 255, 255)})
+        tween(tabBtn, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {TextColor3 = AccentColor})
         tween(indicator, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {Size = UDim2.new(0, 40, 0, 2)})
     end)
 
@@ -361,8 +369,9 @@ local trollTab = createTab("Troll")
 local movementTab = createTab("Movement")
 local visualsTab = createTab("Visuals")
 local worldTab = createTab("World")
+local settingsTab = createTab("Settings")
 
-tabButtons[1].btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+tabButtons[1].btn.TextColor3 = AccentColor
 tabButtons[1].ind.Size = UDim2.new(0, 40, 0, 2)
 trollTab.Visible = true
 
@@ -371,12 +380,18 @@ local function addSection(page, text)
     lbl.Size = UDim2.new(1, 0, 0, 25)
     lbl.BackgroundTransparency = 1
     lbl.Text = text
-    lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lbl.TextColor3 = AccentColor
     lbl.Font = Enum.Font.GothamBold
     lbl.TextSize = 12
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.ZIndex = 11
     lbl.Parent = page
+    
+    -- Agregar a la lista para actualizar colores
+    local indicator = Instance.new("Frame")
+    indicator.Size = UDim2.new(0, 0, 0, 0)
+    indicator.Parent = lbl
+    table.insert(activeIndicators, lbl) 
 end
 
 local function addToggle(page, text, callback)
@@ -395,8 +410,9 @@ local function addToggle(page, text, callback)
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
 
     local stroke = Instance.new("UIStroke", frame)
-    stroke.Color = Color3.fromRGB(60, 60, 60)
+    stroke.Color = AccentColor
     stroke.Transparency = 1
+    table.insert(activeIndicators, stroke)
 
     wrapper.MouseEnter:Connect(function()
         tween(frame, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {BackgroundColor3 = Color3.fromRGB(28, 28, 28)})
@@ -439,7 +455,7 @@ local function addToggle(page, text, callback)
 
     btn.MouseButton1Click:Connect(function()
         state = not state
-        tween(btn, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {BackgroundColor3 = state and Color3.fromRGB(220, 220, 220) or Color3.fromRGB(40, 40, 40)})
+        tween(btn, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {BackgroundColor3 = state and AccentColor or Color3.fromRGB(40, 40, 40)})
         tween(circle, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {
             Position = state and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7),
             BackgroundColor3 = state and Color3.fromRGB(15, 15, 15) or Color3.fromRGB(150, 150, 150)
@@ -448,9 +464,52 @@ local function addToggle(page, text, callback)
     end)
 end
 
+local function addButton(page, text, callback)
+    local wrapper = Instance.new("Frame")
+    wrapper.Size = UDim2.new(1, -10, 0, 40)
+    wrapper.BackgroundTransparency = 1
+    wrapper.ZIndex = 11
+    wrapper.Parent = page
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 13
+    btn.ZIndex = 11
+    btn.Parent = wrapper
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Color = AccentColor
+    stroke.Transparency = 1
+    table.insert(activeIndicators, stroke)
+
+    btn.MouseEnter:Connect(function()
+        tween(btn, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {BackgroundColor3 = Color3.fromRGB(28, 28, 28)})
+        tween(stroke, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {Transparency = 0})
+    end)
+    btn.MouseLeave:Connect(function()
+        tween(btn, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {BackgroundColor3 = Color3.fromRGB(22, 22, 22)})
+        tween(stroke, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {Transparency = 1})
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        pcall(callback)
+        -- Pequeño efecto de clic
+        tween(btn, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {BackgroundColor3 = Color3.fromRGB(40, 40, 40)})
+        task.wait(0.1)
+        tween(btn, 0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {BackgroundColor3 = Color3.fromRGB(28, 28, 28)})
+    end)
+end
+
 ----------------------------------------------------
--- TABS (sin cambios)
+-- FUNCIONES DE TABS
 ----------------------------------------------------
+
+-- TROLL TAB
 addSection(trollTab, "Mic Up Tools")
 local spinConnection
 addToggle(trollTab, "Spin Avatar", function(state)
@@ -463,6 +522,21 @@ addToggle(trollTab, "Spin Avatar", function(state)
         end)
     else
         if spinConnection then spinConnection:Disconnect() end
+    end
+end)
+
+local flingConnection
+addToggle(trollTab, "Fling Aura (Spin rápido)", function(state)
+    if state then
+        flingConnection = RunService.RenderStepped:Connect(function()
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(50), 0)
+                char.HumanoidRootPart.Velocity = Vector3.new(0, 50, 0)
+            end
+        end)
+    else
+        if flingConnection then flingConnection:Disconnect() end
     end
 end)
 
@@ -495,6 +569,7 @@ addToggle(trollTab, "Chat Spam (Zengor on top)", function(state)
     end)
 end)
 
+-- MOVEMENT TAB
 addSection(movementTab, "Local Physics")
 addToggle(movementTab, "WalkSpeed (50)", function(state)
     local char = LocalPlayer.Character
@@ -504,6 +579,10 @@ end)
 addToggle(movementTab, "JumpPower (100)", function(state)
     local char = LocalPlayer.Character
     if char and char:FindFirstChild("Humanoid") then char.Humanoid.JumpPower = state and 100 or 50 end
+end)
+
+addToggle(movementTab, "Low Gravity", function(state)
+    workspace.Gravity = state and 50 or 196.2
 end)
 
 local infJumpConnection
@@ -520,6 +599,7 @@ addToggle(movementTab, "Infinite Jump", function(state)
     end
 end)
 
+-- VISUALS TAB
 addSection(visualsTab, "Render & ESP")
 local espHighlights = {}
 addToggle(visualsTab, "ESP Chams", function(state)
@@ -527,7 +607,7 @@ addToggle(visualsTab, "ESP Chams", function(state)
         for _, player in pairs(Players:GetPlayers()) do
             if player ~= LocalPlayer and player.Character then
                 local hl = Instance.new("Highlight")
-                hl.FillColor = Color3.fromRGB(150, 150, 150)
+                hl.FillColor = AccentColor
                 hl.FillTransparency = 0.5
                 hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
                 hl.Parent = player.Character
@@ -540,17 +620,51 @@ addToggle(visualsTab, "ESP Chams", function(state)
     end
 end)
 
+local tracerConnection
+local tracers = {}
+addToggle(visualsTab, "ESP Tracers", function(state)
+    if state then
+        tracerConnection = RunService.RenderStepped:Connect(function()
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local hrp = player.Character.HumanoidRootPart
+                    local camera = workspace.CurrentCamera
+                    local vector, onScreen = camera:WorldToViewportPoint(hrp.Position)
+                    
+                    if onScreen then
+                        if not tracers[player.Name] then
+                            local line = Drawing.new("Line")
+                            line.Visible = true
+                            line.Color = AccentColor
+                            line.Thickness = 1
+                            line.Transparency = 1
+                            tracers[player.Name] = line
+                        end
+                        tracers[player.Name].From = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y)
+                        tracers[player.Name].To = Vector2.new(vector.X, vector.Y)
+                    else
+                        if tracers[player.Name] then
+                            tracers[player.Name].Visible = false
+                        end
+                    end
+                elseif tracers[player.Name] then
+                    tracers[player.Name]:Remove()
+                    tracers[player.Name] = nil
+                end
+            end
+        end)
+    else
+        if tracerConnection then tracerConnection:Disconnect() end
+        for _, line in pairs(tracers) do line:Remove() end
+        tracers = {}
+    end
+end)
+
 addToggle(visualsTab, "Fullbright", function(state)
     Lighting.Ambient = state and Color3.new(1, 1, 1) or Color3.fromRGB(138, 138, 138)
 end)
 
-addToggle(visualsTab, "FOV 120", function(state)
-    local camera = workspace.CurrentCamera
-    if camera then
-        tween(camera, 0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {FieldOfView = state and 120 or 70})
-    end
-end)
-
+-- WORLD TAB
 addSection(worldTab, "Environment")
 local defaultTime = Lighting.ClockTime
 addToggle(worldTab, "Always Day", function(state)
@@ -567,6 +681,42 @@ addToggle(worldTab, "Disable Shadows", function(state)
     Lighting.GlobalShadows = state and false or defaultShadows
 end)
 
+-- SETTINGS TAB
+addSection(settingsTab, "Theme Colors")
+
+local function changeAccentColor(color)
+    AccentColor = color
+    -- Actualizar colores en la interfaz dinámicamente
+    for _, element in pairs(activeIndicators) do
+        if element:IsA("UIStroke") then
+            element.Color = color
+        elseif element:IsA("Frame") then
+            element.BackgroundColor3 = color
+        elseif element:IsA("TextLabel") then
+            element.TextColor3 = color
+        end
+    end
+    -- Actualizar el botón de la pestaña activa
+    for _, b in pairs(tabButtons) do
+        if b.ind.Size.X.Offset > 0 then
+            b.btn.TextColor3 = color
+        end
+    end
+end
+
+addButton(settingsTab, "Red Theme", function() changeAccentColor(Color3.fromRGB(255, 50, 50)) end)
+addButton(settingsTab, "Blue Theme", function() changeAccentColor(Color3.fromRGB(50, 150, 255)) end)
+addButton(settingsTab, "Purple Theme", function() changeAccentColor(Color3.fromRGB(180, 50, 255)) end)
+addButton(settingsTab, "White Theme (Default)", function() changeAccentColor(Color3.fromRGB(255, 255, 255)) end)
+
+addSection(settingsTab, "System")
+addButton(settingsTab, "Destroy GUI", function()
+    gui:Destroy()
+    if blur then blur:Destroy() end
+    if tracerConnection then tracerConnection:Disconnect() end
+    for _, line in pairs(tracers) do line:Remove() end
+end)
+
 ----------------------------------------------------
 -- Lógica de Apertura / Cierre
 ----------------------------------------------------
@@ -575,7 +725,8 @@ local function toggleMenu()
     opened = not opened
     if opened then
         clickBlocker.Visible = true
-        tween(panel, 0.55, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out, {Position = UDim2.new(0.5, 0, 0.5, 0)})
+        -- Panel se abre más cerca del botón inferior (0.6 en vez de 0.5)
+        tween(panel, 0.55, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out, {Position = UDim2.new(0.5, 0, 0.6, 0)})
         tween(blur, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {Size = 14})
     else
         clickBlocker.Visible = false
